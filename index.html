@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#a54d2d">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>日报生成助手</title>
+  <style>
+    :root {
+      --bg: #f4ede3;
+      --bg-deep: #eadbc8;
+      --panel: rgba(255, 250, 244, 0.92);
+      --panel-strong: #fffdf8;
+      --line: #dbc6ab;
+      --text: #2d241a;
+      --muted: #77624c;
+      --accent: #a54d2d;
+      --accent-deep: #7c371f;
+      --accent-soft: #f1dbc5;
+      --good: #2d7d52;
+      --shadow: 0 18px 40px rgba(90, 53, 26, 0.12);
+      --radius: 22px;
+      --radius-sm: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 216, 175, 0.7), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(197, 130, 85, 0.25), transparent 24%),
+        linear-gradient(135deg, var(--bg) 0%, #fbf7f0 55%, var(--bg-deep) 100%);
+      padding: 18px;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel,
+    .quick-panel {
+      background: var(--panel);
+      border: 1px solid rgba(165, 77, 45, 0.14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -36px -42px auto;
+      width: 170px;
+      height: 170px;
+      background: radial-gradient(circle, rgba(165, 77, 45, 0.16), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(165, 77, 45, 0.1);
+      color: var(--accent-deep);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .left,
+    .right {
+      display: grid;
+      gap: 18px;
+    }
+
+    .quick-panel {
+      padding: 18px;
+      position: sticky;
+      top: 14px;
+      z-index: 5;
+    }
+
+    .quick-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .quick-head h2,
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 22px;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .selected-pill {
+      min-width: 108px;
+      text-align: right;
+      color: var(--accent-deep);
+      font-size: 13px;
+    }
+
+    .selected-pill strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .grid,
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+      padding: 13px 14px;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(165, 77, 45, 0.12);
+    }
+
+    .btn-row,
+    .toolbar,
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #c26d43);
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(165, 77, 45, 0.22);
+    }
+
+    .secondary {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .chip.active {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      border-color: rgba(165, 77, 45, 0.3);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .search-wrap::before {
+      content: "搜";
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .search-wrap input {
+      padding-left: 38px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .pick-card {
+      display: grid;
+      gap: 12px;
+      border: 1px solid rgba(165, 77, 45, 0.16);
+      border-radius: 20px;
+      background: var(--panel-strong);
+      padding: 15px;
+      min-height: 170px;
+    }
+
+    .pick-card.active {
+      border-color: rgba(165, 77, 45, 0.5);
+      box-shadow: 0 16px 30px rgba(165, 77, 45, 0.14);
+    }
+
+    .badge {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: rgba(165, 77, 45, 0.12);
+      color: var(--accent-deep);
+      font-size: 12px;
+    }
+
+    .pick-card h3 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.3;
+    }
+
+    .meta {
+      display: grid;
+      gap: 3px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pick-btn {
+      width: 100%;
+      padding: 16px 14px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .small-btn {
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .preview {
+      border-radius: 20px;
+      border: 1px dashed rgba(165, 77, 45, 0.3);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(251, 246, 239, 0.96)),
+        repeating-linear-gradient(
+          180deg,
+          transparent 0,
+          transparent 33px,
+          rgba(165, 77, 45, 0.08) 33px,
+          rgba(165, 77, 45, 0.08) 34px
+        );
+      padding: 16px;
+    }
+
+    .preview pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.9;
+      font-size: 15px;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--good);
+      font-size: 14px;
+    }
+
+    .install-tip {
+      border-radius: 18px;
+      background: rgba(165, 77, 45, 0.08);
+      border: 1px solid rgba(165, 77, 45, 0.14);
+      padding: 12px 14px;
+      color: var(--accent-deep);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    details summary {
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 2px 0;
+    }
+
+    .summary-bar strong {
+      font-size: 18px;
+    }
+
+    .summary-bar span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .empty {
+      border: 1px dashed rgba(165, 77, 45, 0.24);
+      border-radius: 18px;
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .top-tools {
+      display: none;
+      position: fixed;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 8;
+    }
+
+    .fab {
+      border-radius: 999px;
+      padding: 14px 18px;
+      font-weight: 700;
+      box-shadow: 0 18px 34px rgba(165, 77, 45, 0.28);
+    }
+
+    @media (max-width: 960px) {
+      body {
+        padding: 12px;
+      }
+
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .right {
+        order: -1;
+      }
+
+      .quick-panel {
+        position: static;
+      }
+
+      .top-tools {
+        display: block;
+      }
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 31px;
+      }
+
+      .hero,
+      .panel,
+      .quick-panel {
+        border-radius: 20px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar,
+      .btn-row {
+        flex-direction: column;
+      }
+
+      .toolbar button,
+      .btn-row button {
+        width: 100%;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .pick-card {
+        min-height: auto;
+      }
+
+      .pick-btn {
+        font-size: 17px;
+        padding: 18px 14px;
+      }
+
+      textarea {
+        min-height: 88px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <span class="eyebrow">手机友好的日报工具</span>
+      <h1>点一下名字，日报立刻生成</h1>
+      <p>页面已经按手机操作重新整理。上面先选名单，下面快速补时间和内容，再一键复制到微信、表格或工资申报系统。</p>
+    </section>
+
+    <div class="page">
+      <main class="left">
+        <section class="panel">
+          <div class="grid">
+            <div>
+              <h2>快捷选择</h2>
+              <p class="sub">先搜名字或直接点卡片。手机上按钮做得更大，单手也比较容易点。</p>
+            </div>
+
+            <div class="chips" id="filter-chips">
+              <button class="chip active" type="button" data-filter="all">全部</button>
+              <button class="chip" type="button" data-filter="class">班级</button>
+              <button class="chip" type="button" data-filter="student">学生</button>
+            </div>
+
+            <div class="toolbar">
+              <label class="search-wrap">
+                <input id="search" placeholder="搜索班级或学生">
+              </label>
+              <button class="secondary" type="button" id="load-demo">导入示例</button>
+              <button class="ghost" type="button" id="clear-all">清空名单</button>
+            </div>
+
+            <div id="cards" class="cards"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <details>
+            <summary>
+              <div class="summary-bar">
+                <div>
+                  <strong>新增名单</strong>
+                  <span>平时收起来，需要时再展开</span>
+                </div>
+                <span>点我展开/收起</span>
+              </div>
+            </summary>
+            <div style="height:14px"></div>
+            <form id="entry-form" class="form-grid">
+              <label>
+                类型
+                <select id="type" name="type">
+                  <option value="class">班级</option>
+                  <option value="student">学生</option>
+                </select>
+              </label>
+              <label>
+                名称
+                <input id="name" name="name" placeholder="例如：高二1班 / 张三" required>
+              </label>
+              <div class="row">
+                <label>
+                  学科
+                  <input id="subject" name="subject" value="理科数学" required>
+                </label>
+                <label>
+                  默认形式
+                  <select id="mode" name="mode">
+                    <option value="线下">线下</option>
+                    <option value="线上">线上</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                默认内容
+                <textarea id="defaultContent" name="defaultContent" placeholder="例如：复习函数基础，讲解例题并完成随堂练习。"></textarea>
+              </label>
+              <div class="btn-row">
+                <button class="primary" type="submit">保存到名单</button>
+                <button class="ghost" type="button" id="reset-form">恢复默认值</button>
+              </div>
+              <div class="helper">名单会自动保存到当前浏览器。本机再次打开时，内容还在。</div>
+            </form>
+          </details>
+        </section>
+      </main>
+
+      <aside class="right">
+        <section class="quick-panel" id="quick-panel">
+          <div class="quick-head">
+            <div>
+              <h2>快速生成</h2>
+              <p class="sub">手机上优先处理这里，尽量少滚动、少输入。</p>
+            </div>
+            <div class="selected-pill">
+              已选
+              <strong id="selectedTypeName">未选择</strong>
+            </div>
+          </div>
+
+          <form id="report-form" class="form-grid">
+            <label>
+              当前对象
+              <input id="selectedName" readonly placeholder="请先点击左侧名单">
+            </label>
+
+            <div class="row">
+              <label>
+                上课日期
+                <input id="date" type="date">
+              </label>
+              <label>
+                线上/线下
+                <select id="reportMode">
+                  <option value="线下">线下</option>
+                  <option value="线上">线上</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="row">
+              <label>
+                开始时间
+                <input id="startTime" type="time" value="13:00">
+              </label>
+              <label>
+                结束时间
+                <input id="endTime" type="time" value="15:00">
+              </label>
+            </div>
+
+            <label>
+              时长（小时）
+              <input id="duration" type="number" step="0.5" min="0" value="2">
+            </label>
+
+            <div class="grid">
+              <div>
+                <h2 style="font-size:16px; margin:0 0 8px;">内容快捷模板</h2>
+                <div class="chips" id="content-chips">
+                  <button class="chip" type="button" data-template="复习函数基础，讲解例题并完成随堂练习。">复习巩固</button>
+                  <button class="chip" type="button" data-template="讲解新课知识点，配合例题训练并完成课堂检测。">新课讲解</button>
+                  <button class="chip" type="button" data-template="订正作业错题，梳理解题思路并补充同类练习。">错题订正</button>
+                  <button class="chip" type="button" data-template="进行阶段复习，梳理重点题型并检查掌握情况。">阶段复习</button>
+                </div>
+              </div>
+            </div>
+
+            <label>
+              内容
+              <textarea id="content" placeholder="填写当次课程内容"></textarea>
+            </label>
+
+            <div class="btn-row">
+              <button class="primary" type="button" id="generate">生成日报</button>
+              <button class="secondary" type="button" id="copy-report">复制日报</button>
+            </div>
+          </form>
+
+          <div class="preview">
+            <pre id="preview">班级：
+时间：
+内容：
+反馈：顺利进行</pre>
+          </div>
+          <div class="install-tip" id="install-tip">部署上线后，在手机浏览器里打开可加入桌面，像应用一样使用。</div>
+          <div id="status" class="status"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div class="top-tools">
+    <button class="primary fab" type="button" id="jump-to-top">生成区</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "daily-report-generator.entries.v2";
+
+    const demoTemplates = [
+      {
+        type: "class",
+        name: "高二1班",
+        subject: "理科数学",
+        mode: "线下",
+        defaultContent: "复习函数基础，讲解例题并完成随堂练习。"
+      },
+      {
+        type: "class",
+        name: "初三冲刺班",
+        subject: "理科数学",
+        mode: "线上",
+        defaultContent: "进行阶段复习，梳理重点题型并检查掌握情况。"
+      },
+      {
+        type: "student",
+        name: "张三",
+        subject: "理科数学",
+        mode: "线上",
+        defaultContent: "讲解数列综合题，订正作业错题。"
+      }
+    ];
+
+    const state = {
+      entries: loadEntries(),
+      selectedId: null,
+      filter: "all"
+    };
+
+    const entryForm = document.getElementById("entry-form");
+    const reportForm = document.getElementById("report-form");
+    const searchInput = document.getElementById("search");
+    const cards = document.getElementById("cards");
+    const preview = document.getElementById("preview");
+    const status = document.getElementById("status");
+    const selectedName = document.getElementById("selectedName");
+    const selectedTypeName = document.getElementById("selectedTypeName");
+    const reportMode = document.getElementById("reportMode");
+    const dateInput = document.getElementById("date");
+    const startTime = document.getElementById("startTime");
+    const endTime = document.getElementById("endTime");
+    const durationInput = document.getElementById("duration");
+    const contentInput = document.getElementById("content");
+    const quickPanel = document.getElementById("quick-panel");
+    const installTip = document.getElementById("install-tip");
+    let deferredInstallPrompt = null;
+
+    dateInput.value = todayForInput();
+    renderCards();
+    generateReport();
+
+    entryForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(entryForm);
+      const entry = {
+        id: crypto.randomUUID(),
+        type: String(formData.get("type")).trim(),
+        name: String(formData.get("name")).trim(),
+        subject: String(formData.get("subject")).trim(),
+        mode: String(formData.get("mode")).trim(),
+        defaultContent: String(formData.get("defaultContent")).trim()
+      };
+
+      if (!entry.name || !entry.subject) {
+        setStatus("请先填写名称和学科。");
+        return;
+      }
+
+      state.entries.unshift(entry);
+      persistEntries();
+      renderCards();
+      selectEntry(entry.id, true);
+      entryForm.reset();
+      document.getElementById("subject").value = "理科数学";
+      document.getElementById("mode").value = "线下";
+      setStatus("名单已保存，并已载入快速生成区。");
+    });
+
+    document.getElementById("reset-form").addEventListener("click", () => {
+      entryForm.reset();
+      document.getElementById("subject").value = "理科数学";
+      document.getElementById("mode").value = "线下";
+      setStatus("录入表单已恢复默认值。");
+    });
+
+    document.getElementById("generate").addEventListener("click", () => {
+      generateReport();
+      setStatus("日报已生成。");
+    });
+
+    document.getElementById("copy-report").addEventListener("click", async () => {
+      generateReport();
+      try {
+        await navigator.clipboard.writeText(preview.textContent);
+        setStatus("日报已复制到剪贴板。");
+      } catch (error) {
+        setStatus("复制失败，请手动复制下方内容。");
+      }
+    });
+
+    document.getElementById("load-demo").addEventListener("click", () => {
+      state.entries = [...buildDemoEntries(), ...state.entries];
+      persistEntries();
+      renderCards();
+      setStatus("已导入示例名单。");
+    });
+
+    document.getElementById("clear-all").addEventListener("click", () => {
+      const confirmed = window.confirm("确定清空全部名单吗？");
+      if (!confirmed) {
+        return;
+      }
+
+      state.entries = [];
+      state.selectedId = null;
+      persistEntries();
+      fillSelection(null);
+      renderCards();
+      generateReport();
+      setStatus("名单已清空。");
+    });
+
+    document.getElementById("jump-to-top").addEventListener("click", () => {
+      quickPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      installTip.innerHTML = '这个网页可以安装到手机桌面。等浏览器出现“添加到主屏幕”或“安装”按钮时，点一下就可以。';
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      installTip.textContent = "已安装到设备后，可以像普通应用一样从桌面打开。";
+    });
+
+    document.getElementById("filter-chips").querySelectorAll("[data-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.filter = button.dataset.filter;
+        document.querySelectorAll("#filter-chips .chip").forEach((chip) => chip.classList.remove("active"));
+        button.classList.add("active");
+        renderCards();
+      });
+    });
+
+    document.getElementById("content-chips").querySelectorAll("[data-template]").forEach((button) => {
+      button.addEventListener("click", () => {
+        contentInput.value = button.dataset.template;
+        generateReport();
+        setStatus("已套用内容模板。");
+      });
+    });
+
+    searchInput.addEventListener("input", renderCards);
+
+    reportForm.addEventListener("input", () => {
+      autoUpdateDuration();
+      generateReport();
+    });
+
+    function loadEntries() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return buildDemoEntries();
+        }
+
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : buildDemoEntries();
+      } catch (error) {
+        return buildDemoEntries();
+      }
+    }
+
+    function persistEntries() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
+    }
+
+    function renderCards() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const filtered = state.entries.filter((entry) => {
+        const matchFilter = state.filter === "all" || entry.type === state.filter;
+        const target = [entry.name, entry.subject, entry.mode, typeLabel(entry.type)].join(" ").toLowerCase();
+        const matchKeyword = !keyword || target.includes(keyword);
+        return matchFilter && matchKeyword;
+      });
+
+      if (!filtered.length) {
+        cards.innerHTML = '<div class="empty">当前没有匹配结果。你可以展开下方“新增名单”来添加。</div>';
+        return;
+      }
+
+      cards.innerHTML = filtered.map((entry) => `
+        <article class="pick-card ${entry.id === state.selectedId ? "active" : ""}">
+          <span class="badge">${typeLabel(entry.type)}</span>
+          <div>
+            <h3>${escapeHtml(entry.name)}</h3>
+            <div class="meta">
+              <span>学科：${escapeHtml(entry.subject)}</span>
+              <span>默认形式：${escapeHtml(entry.mode)}</span>
+            </div>
+          </div>
+          <button class="primary pick-btn" type="button" data-action="select" data-id="${entry.id}">点我生成日报</button>
+          <button class="ghost small-btn" type="button" data-action="delete" data-id="${entry.id}">删除这条</button>
+        </article>
+      `).join("");
+
+      cards.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const { action, id } = button.dataset;
+          if (action === "select") {
+            selectEntry(id, true);
+            return;
+          }
+          if (action === "delete") {
+            deleteEntry(id);
+          }
+        });
+      });
+    }
+
+    function selectEntry(id, scrollToPanel = false) {
+      const entry = state.entries.find((item) => item.id === id);
+      if (!entry) {
+        return;
+      }
+
+      state.selectedId = id;
+      fillSelection(entry);
+      renderCards();
+      generateReport();
+      if (scrollToPanel && window.innerWidth <= 960) {
+        quickPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setStatus(`已选择${typeLabel(entry.type)}：${entry.name}`);
+    }
+
+    function deleteEntry(id) {
+      const entry = state.entries.find((item) => item.id === id);
+      state.entries = state.entries.filter((item) => item.id !== id);
+      if (state.selectedId === id) {
+        state.selectedId = null;
+        fillSelection(null);
+      }
+      persistEntries();
+      renderCards();
+      generateReport();
+      if (entry) {
+        setStatus(`已删除：${entry.name}`);
+      }
+    }
+
+    function fillSelection(entry) {
+      if (!entry) {
+        selectedName.value = "";
+        selectedTypeName.textContent = "未选择";
+        contentInput.value = "";
+        return;
+      }
+
+      selectedName.value = entry.name;
+      selectedTypeName.textContent = `${typeLabel(entry.type)} / ${entry.name}`;
+      reportMode.value = entry.mode;
+      contentInput.value = entry.defaultContent || "";
+    }
+
+    function generateReport() {
+      const entry = state.entries.find((item) => item.id === state.selectedId);
+      const line1 = buildTitle(entry);
+      const line2 = buildTimeLine();
+      const line3 = `内容：${contentInput.value.trim()}`;
+      const line4 = "反馈：顺利进行";
+      preview.textContent = `${line1}\n${line2}\n${line3}\n${line4}`;
+    }
+
+    function buildTitle(entry) {
+      if (!entry) {
+        return "班级：";
+      }
+
+      const mode = reportMode.value;
+      if (entry.type === "class") {
+        return `班级：${entry.name}${entry.subject}（${mode}）`;
+      }
+      return `班级：${entry.name}${entry.subject}vip（${mode}）`;
+    }
+
+    function buildTimeLine() {
+      const dateText = formatDateZh(dateInput.value);
+      return `时间：${dateText} ${startTime.value}-${endTime.value}（${formatDuration(durationInput.value)}）`;
+    }
+
+    function autoUpdateDuration() {
+      if (!startTime.value || !endTime.value) {
+        return;
+      }
+
+      const start = toMinutes(startTime.value);
+      const end = toMinutes(endTime.value);
+      if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+        return;
+      }
+
+      const hours = (end - start) / 60;
+      durationInput.value = Number.isInteger(hours) ? String(hours) : String(Number(hours.toFixed(1)));
+    }
+
+    function typeLabel(type) {
+      return type === "student" ? "学生" : "班级";
+    }
+
+    function buildDemoEntries() {
+      return demoTemplates.map((entry) => ({
+        ...entry,
+        id: crypto.randomUUID()
+      }));
+    }
+
+    function formatDateZh(value) {
+      if (!value) {
+        return "";
+      }
+      const [year, month, day] = value.split("-");
+      return `${Number(year)}年${Number(month)}月${Number(day)}日`;
+    }
+
+    function formatDuration(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num) || num <= 0) {
+        return "0h";
+      }
+      return `${num}h`;
+    }
+
+    function toMinutes(value) {
+      const [hour, minute] = value.split(":").map(Number);
+      return hour * 60 + minute;
+    }
+
+    function todayForInput() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
